@@ -1,0 +1,916 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skillster | Life achievements</title>
+<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#161a17;--panel:#212922;--panel2:#2c352d;--line:#4c5b46;--text:#f0f0d8;--muted:#aab69f;--gold:#e5c46a;--green:#9bc56a}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;display:flex;flex-direction:column;height:100dvh;background:var(--bg);color:var(--text);font-family:'Pixelify Sans',ui-monospace,Consolas,monospace;font-size:15px;background-image:linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px),linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px);background-size:24px 24px}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+header{display:flex;align-items:center;gap:16px;padding:10px 16px;background:#202720;border-bottom:4px solid #0e120f;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:22px;letter-spacing:1px}
+.logo{width:30px;height:30px;background:linear-gradient(135deg,#9bc56a 0 45%,#5e8d43 45%);border:3px solid #c5d49c;box-shadow:inset -5px -5px #38572f}
+nav{display:flex;gap:4px;flex:1;flex-wrap:wrap}
+nav button{background:transparent;border:2px solid transparent;padding:8px 12px}
+nav button:hover,nav button.on{background:#354334;border-color:#657e59}
+.lvl{display:flex;align-items:center;gap:10px;font-size:14px}
+.lvl b{color:var(--gold)}
+.hbar{width:130px;height:12px;background:#0f140f;border:2px solid #53624b}
+.hbar i,.pbar i{display:block;height:100%;width:0;background:var(--green)}
+main{flex:1;min-height:0;position:relative}
+.view{position:absolute;inset:0;display:none;overflow:auto}
+.view.on{display:block}
+#v-map.on{display:flex;flex-direction:column;overflow:hidden}
+#tabs{display:flex;overflow-x:auto;background:#242c25;border-bottom:3px solid #101510;flex:none}
+#tabs button{flex:none;background:#2c352d;border:2px solid #3d4a3a;border-bottom:0;margin:6px 0 0 6px;padding:7px 12px;white-space:nowrap}
+#tabs button small{color:var(--muted);margin-left:6px}
+#tabs button.on{background:#4c6e3e;border-color:#a2c879}
+#canvas{flex:1;position:relative;overflow:hidden;cursor:grab;touch-action:none;background:#1b211c radial-gradient(#364333 1px,transparent 1px) 0 0/24px 24px}
+#canvas:active{cursor:grabbing}
+#world{position:absolute;left:0;top:0;transform-origin:0 0}
+#world svg{position:absolute;left:0;top:0;pointer-events:none}
+#world path{fill:none;stroke:#4d584a;stroke-width:5}
+#world path.half{stroke:#d4b75e}
+#world path.on{stroke:var(--green)}
+#world path.x{stroke-dasharray:8 6}
+.node{position:absolute;width:76px;height:76px;background:none;border:0;padding:0}
+.box{display:grid;place-items:center;width:76px;height:76px;border:4px solid;font-size:32px;position:relative;transition:transform .1s}
+.node:hover .box{transform:translateY(-3px)}
+.box:after{content:"";position:absolute;right:3px;top:3px;width:9px;height:9px;background:var(--rc)}
+.node.locked .box{background:#394239;border-color:#5b6554;box-shadow:inset -6px -6px #242d25,inset 5px 5px #4a5446}
+.node.locked .box i{filter:grayscale(1);opacity:.55}
+.node.avail .box{background:#665b36;border-color:#d4b75e;box-shadow:inset -6px -6px #403b27,inset 5px 5px #8a7847}
+.node.done .box{background:#4c6e3e;border-color:#a2c879;box-shadow:inset -6px -6px #35512d,inset 5px 5px #70965a}
+.node.done .box:before{content:"✔";position:absolute;right:4px;bottom:0;font-size:14px;font-style:normal;color:#e8f6cc}
+.node.secret .box{border-style:dashed}
+.node.sel .box{outline:3px solid #fff;outline-offset:3px}
+.node.hit .box{animation:hit .8s 3}
+@keyframes hit{50%{transform:scale(1.18)}}
+.box i{font-style:normal}
+.lbl{position:absolute;top:82px;left:-37px;width:150px;text-align:center;font-size:13px;line-height:1.15;color:#dfe8d2}
+.node.locked .lbl{color:#97a38d}
+.tools{position:absolute;left:10px;bottom:10px;display:flex;gap:6px;flex-wrap:wrap}
+.tools button,.search{background:#303a30;border:2px solid #65765b;padding:8px 11px}
+.tools button:hover{background:#3c4b38}
+.search{position:absolute;right:10px;top:10px;width:min(230px,55vw)}
+.legend{position:absolute;right:10px;bottom:10px;background:#293229cc;border:2px solid #485744;padding:7px 10px;font-size:12px;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap}
+.legend span:before{content:"";display:inline-block;width:10px;height:10px;border:2px solid;margin-right:5px;vertical-align:-1px}
+.legend .l1:before{border-color:#5b6554;background:#394239}.legend .l2:before{border-color:#d4b75e;background:#665b36}.legend .l3:before{border-color:#a2c879;background:#4c6e3e}
+.page{max-width:1000px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:26px;margin:0 0 6px;font-weight:600}
+.muted{color:var(--muted)}
+.small{font-size:13px;color:var(--muted)}
+.panel{background:var(--panel);border:3px solid var(--line);padding:16px;margin-bottom:16px}
+.btn{background:#73994f;border:3px solid #b2d18b;color:#10170d;font-weight:600;padding:11px 16px}
+.btn:hover{background:#82a95d}
+.btn:disabled{background:#465b3c;color:#cfe0c3;border-color:#718363;cursor:default}
+.btn.gray{background:#5c6658;border-color:#8c9886;color:var(--text)}
+.btn.gray:hover{background:#6a7566}
+.btn.dark{background:#3a3f38;border-color:#6c7466;color:var(--text)}
+.link{background:none;border:0;color:var(--muted);text-decoration:underline;padding:4px}
+.tag{display:inline-block;font-size:12px;padding:4px 8px;background:#3d4b3d;border:1px solid #718363;margin:0 6px 6px 0}
+#det{position:fixed;right:16px;bottom:16px;width:min(350px,calc(100vw - 32px));background:#283229;border:4px solid #718363;box-shadow:8px 8px #0c100d;z-index:20;padding:16px;display:none;max-height:calc(100dvh - 90px);overflow:auto}
+#det.on{display:block}
+.dtop{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted)}
+#dx{background:#465443;border:2px solid #829475;padding:2px 9px}
+.dic{font-size:38px;margin:10px 0 2px}
+#det h2{font-size:21px;margin:0 0 6px;font-weight:600}
+#det p{margin:0 0 10px;line-height:1.45;color:#ccd7c2}
+.chk{display:flex;gap:8px;align-items:center;margin-top:12px;font-size:14px;color:var(--muted)}
+#det .btn{width:100%}
+#pop{position:fixed;inset:0;background:#000a;display:none;place-items:center;z-index:50}
+#pop.on{display:grid}
+.pbox{width:min(400px,92vw);background:#283229;border:4px solid #b2d18b;box-shadow:8px 8px #0c100d;padding:22px;text-align:center;animation:pin .22s steps(4)}
+@keyframes pin{from{transform:scale(.8)}}
+.ptag{color:var(--gold);font-size:14px;margin-bottom:10px}
+.picon{display:inline-grid;place-items:center;width:84px;height:84px;font-size:44px;background:#4c6e3e;border:4px solid #a2c879;box-shadow:inset -6px -6px #35512d,inset 5px 5px #70965a}
+.pbox h2{margin:14px 0 6px;font-size:24px;font-weight:600}
+.pbox p{margin:0 0 12px;color:#ccd7c2;line-height:1.4}
+.pmeta{display:flex;gap:10px;justify-content:center;margin-bottom:14px;font-size:14px}
+.pbar{height:16px;background:#0f140f;border:2px solid #53624b;margin-bottom:6px}
+#pl{font-size:14px;color:var(--muted);margin-bottom:14px;min-height:20px}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:60}
+#toast{position:fixed;left:50%;top:80px;transform:translateX(-50%);background:#d7c16e;color:#202016;border:3px solid #f0dc91;padding:9px 14px;font-weight:600;display:none;z-index:70;box-shadow:5px 5px #0c100d}
+#toast.on{display:block}
+.qc{text-align:center}
+.qcbox{display:inline-grid;place-items:center;width:110px;height:110px;font-size:58px;border:4px solid #d4b75e;background:#665b36;box-shadow:inset -8px -8px #403b27,inset 6px 6px #8a7847;margin:8px 0}
+.qc h2{font-size:28px;margin:8px 0;font-weight:600}
+.qc p.d{font-size:17px;max-width:520px;margin:0 auto 12px;line-height:1.45}
+.qcq{font-size:20px;margin:20px 0 14px;color:var(--gold)}
+.qcb{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.qcb .btn{min-width:130px;font-size:17px}
+.cols{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:16px}
+.ev{display:flex;gap:12px}
+.av{flex:none;width:44px;height:44px;display:grid;place-items:center;font-weight:600;font-size:20px;color:#1a1a14;border:3px solid #0003;box-shadow:inset -5px -5px #0003}
+.ev .b{flex:1;min-width:0}
+.rx{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 6px}
+.rx button{background:#303a30;border:2px solid #55664d;padding:3px 9px}
+.rx button.me{background:#4c6e3e;border-color:#a2c879}
+.cm{font-size:14px;color:#ccd7c2;margin:4px 0}
+.cmrow{display:flex;gap:6px;margin-top:6px}
+.cmrow input,.in{flex:1;min-width:0;background:#141a15;border:2px solid #55664d;padding:7px 9px}
+.fr{display:flex;align-items:center;gap:10px;width:100%;background:none;border:2px solid transparent;padding:6px;text-align:left}
+.fr:hover{background:#354334;border-color:#657e59}
+.goal{margin-bottom:14px;font-size:14px}
+.skill{display:grid;grid-template-columns:130px 1fr 50px;gap:10px;align-items:center;margin:8px 0;font-size:14px}
+.skill .pbar{margin:0}
+#modal{position:fixed;inset:0;background:#000a;display:none;place-items:center;z-index:40;padding:12px}
+#modal.on{display:grid}
+#modal .panel{width:min(440px,100%);margin:0;max-height:90dvh;overflow:auto}
+.hl{color:var(--gold)}
+.qgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:10px}
+.qcard{background:#283229;border:3px solid #4c5b46;padding:12px;display:flex;flex-direction:column;gap:6px}
+.qcard h3{margin:0;font-size:15px;font-weight:600}
+.qcard .d{font-size:13px;color:#ccd7c2;flex:1}
+.qcard .meta{display:flex;gap:6px;flex-wrap:wrap;font-size:11px}
+.qcard .act{display:flex;gap:6px;margin-top:6px}
+.qcard .act .btn,.qcard .act .link{flex:1;text-align:center;padding:8px 6px;font-size:13px}
+.qtimer{font-size:11px;color:var(--muted)}
+.shopgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:10px}
+.sitem{background:#283229;border:3px solid #4c5b46;padding:10px;text-align:center;cursor:pointer}
+.sitem:hover{border-color:#8aa97e}
+.sitem .ic{font-size:30px;margin-bottom:4px}
+.sitem .nm{font-size:13px;font-weight:600}
+.sitem .pr{font-size:12px;color:var(--gold);margin-top:4px}
+.sitem.owned{border-color:#a2c879}
+.sitem.eq{border-color:#e5c46a;box-shadow:inset 0 0 0 2px #e5c46a55}
+.faq details{border:2px solid #3d4a3a;margin-bottom:6px;padding:8px 10px;background:#232c23}
+.faq summary{cursor:pointer;font-weight:600}
+.faq p{margin:8px 0 0;color:#ccd7c2;font-size:13px}
+select.in{appearance:none}
+.plate{padding:2px 8px;display:inline-block;border:1px solid #0003}
+.plate-wood{background:#6b4a2d;color:#f2e4c8}
+.plate-chrome{background:linear-gradient(90deg,#aab3bd,#e7ecf2);color:#1a1a1a}
+.av.frame-gold{box-shadow:0 0 0 3px #e5c46a,inset -5px -5px #0003}
+.av.frame-vine{box-shadow:0 0 0 3px #6fcf7f,inset -5px -5px #0003}
+.av.frame-neon{box-shadow:0 0 0 3px #5ef0ff,0 0 8px #5ef0ff,inset -5px -5px #0003}
+body[data-theme="ember"]{--green:#e0793f;--gold:#f2a65a}
+body[data-theme="glacier"]{--green:#6fb8d9;--gold:#bfe3ef}
+body[data-theme="royal"]{--green:#b081e0;--gold:#e6b8ff}
+body[data-skin="neon"] .node.done .box{border-color:#5ef0ff;box-shadow:inset -6px -6px #063036,inset 5px 5px #0f4850,0 0 10px #5ef0ff99;background:#0b2a30}
+body[data-skin="royal"] .node.done .box{border-color:#d9a6ff;box-shadow:inset -6px -6px #2a1540,inset 5px 5px #4a2a66,0 0 10px #d9a6ff88;background:#241036}
+body.bg-sunset #canvas{background-image:linear-gradient(180deg,#3a2a1fcc,transparent 40%),radial-gradient(#364333 1px,transparent 1px);background-size:auto,24px 24px}
+body.bg-circuit #canvas{background-image:linear-gradient(#2a332a99 1px,transparent 1px),linear-gradient(90deg,#2a332a99 1px,transparent 1px),radial-gradient(#364333 1px,transparent 1px);background-size:48px 48px,48px 48px,24px 24px}
+body.bg-aurora #canvas{background-image:linear-gradient(120deg,#1b3a2fbb,#1b213abb,transparent),radial-gradient(#364333 1px,transparent 1px);background-size:auto,24px 24px}
+@media(max-width:760px){.cols{grid-template-columns:1fr}.legend{display:none}.hbar{width:80px}.brand{font-size:19px}.skill{grid-template-columns:100px 1fr 44px}#det{right:8px;left:8px;bottom:8px;width:auto}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><span class="logo"></span>SKILLSTER</div>
+  <nav id="nav"><button data-v="map">Map</button><button data-v="qc">Quick Check</button><button data-v="quests">Quests</button><button data-v="shop">Shop</button><button data-v="feed">Feed</button><button data-v="me">Profile</button></nav>
+  <div class="lvl"><b id="lv">Lv 1</b><div class="hbar"><i id="hb"></i></div><span id="hx">0 XP</span><span id="hc">🪙 0</span></div>
+</header>
+<main>
+  <section class="view" id="v-map">
+    <div id="tabs"></div>
+    <div id="canvas">
+      <div id="world"></div>
+      <input class="search" id="q" placeholder="Search achievements, press Enter" aria-label="Search achievements">
+      <div class="tools"><button id="zi" title="Zoom in">+</button><button id="zo" title="Zoom out">−</button><button id="zf">Fit</button><button id="zn">Next up</button></div>
+      <div class="legend"><span class="l1">Locked</span><span class="l2">Ready</span><span class="l3">Done</span><span>Dashed line: extra prerequisite</span></div>
+    </div>
+  </section>
+  <section class="view" id="v-qc"><div class="page" id="qcp"></div></section>
+  <section class="view" id="v-quests"><div class="page" id="qp"></div></section>
+  <section class="view" id="v-shop"><div class="page" id="sp"></div></section>
+  <section class="view" id="v-feed"><div class="page" id="fp"></div></section>
+  <section class="view" id="v-me"><div class="page" id="mp"></div></section>
+</main>
+<aside id="det" aria-live="polite">
+  <div class="dtop"><span id="dcat"></span><button id="dx" aria-label="Close">✕</button></div>
+  <div class="dic" id="dic"></div><h2 id="dt"></h2><p id="dd"></p>
+  <div id="dtags"></div><p class="small" id="dpre"></p>
+  <button class="btn" id="ddo"></button>
+  <label class="chk"><input type="checkbox" id="dpv"> Keep this one private (hidden from the feed)</label>
+  <button class="link" id="dundo">Take it back</button>
+</aside>
+<div id="pop"><div class="pbox">
+  <div class="ptag">Achievement unlocked</div><div class="picon" id="pi"></div>
+  <h2 id="pt"></h2><p id="pd"></p>
+  <div class="pmeta"><span class="tag" id="pr"></span><span class="tag" id="px"></span></div>
+  <div class="pbar"><i id="pf"></i></div><div id="pl"></div>
+  <button class="btn" id="pok">Continue</button>
+</div></div>
+<div id="modal"><div class="panel" id="mbox"></div></div>
+<div id="toast"></div>
+<canvas id="fx"></canvas>
+
+<script>
+/* ---------- DATA ---------- */
+const RAR={C:{n:'Common',xp:10,coins:5,c:'#b9c2b0'},U:{n:'Uncommon',xp:25,coins:10,c:'#6fcf7f'},R:{n:'Rare',xp:50,coins:25,c:'#5fa8e8'},E:{n:'Epic',xp:100,coins:50,c:'#b57be8'},L:{n:'Legendary',xp:250,coins:100,c:'#f0b93a'}};
+/* line format: id|title|icon|description|rarity(C U R E L)|parents (a+b)|flag (s = secret) */
+const TABS=[
+{id:'life',name:'Life',icon:'🌱',data:`
+born|Hello, World|🍼|Be born. Everyone starts here.|C|
+school|Backpack Equipped|🎒|Start your first day of school.|C|born
+pet|Pet Parent|🐶|Take care of a pet.|C|born
+grad|Cap Toss|🎓|Graduate from a school, college or course.|U|school
+adult|Legally Adult|🎂|Turn 18.|C|school
+vote|Voice Heard|🗳️|Vote in an election.|U|adult
+license|Licensed to Drive|🚗|Pass your driving test.|U|adult
+car|Wheels of Your Own|🔑|Own a car or other vehicle.|R|license
+job|First Paycheck|💼|Earn money for your own work.|U|adult
+fund|Rainy Day Fund|🐷|Save up three months of expenses.|R|job
+home|Place of Your Own|🏠|Rent or buy a home that is yours.|R|job
+move|New City|🏙️|Move to a different city.|R|home
+abroad|Living Abroad|🛫|Live in another country for 3+ months.|E|move
+owner|Homeowner|🏡|Buy a home.|E|home
+century|Century Club|💯|Live to 100.|L|owner|s`},
+{id:'sports',name:'Sports',icon:'💪',data:`
+move|Get Moving|👟|Exercise on purpose, at least once.|C|
+bike|Training Wheels Off|🚲|Learn to ride a bike.|C|move
+bsolo|First Solo Ride|🚴|Ride on your own for the first time.|C|bike
+b5|Five Kilometres|📏|Ride 5 km in one go.|C|bsolo
+bfriends|Pedal Pals|👯|Ride with friends.|U|bsolo
+broute|Route Scout|🗺️|Discover a new route.|U|b5
+blong|Long Haul|🛣️|Ride 30 km or more in a day.|R|b5
+run|First Run|🏃|Go for a run.|C|move
+r5|5K Finisher|🏅|Run 5 km without stopping.|U|run
+r10|10K Finisher|🥈|Run 10 km.|R|r5
+half|Half Marathon|🥇|Run 21 km.|E|r10
+mara|Marathon|🏆|Run 42 km.|L|half
+swim|Water Ready|🏊|Swim confidently.|C|move
+sea|Open Water|🌊|Swim in a lake or the sea.|U|swim
+km|One Kilometre|🐬|Swim 1 km in a session.|R|sea
+team|Team Player|⚽|Join a sports team or club.|C|move
+goal|Scoreboard Moment|🥅|Score a goal or point in a match.|U|team
+win|Champions|🎖️|Win a match or competition.|R|goal
+gym|Gym Regular|🏋️|Work out weekly for a month.|U|move
+pull|First Pull-Up|💪|Do a full pull-up.|R|gym
+climb|Wall Climber|🧗|Climb an indoor wall.|U|gym
+snow|Snow Slider|🎿|Ski or snowboard down a slope.|R|move
+hike|Trail Walker|🥾|Hike a marked trail.|U|move
+peak|Summit|⛰️|Reach a mountain summit.|R|hike`},
+{id:'social',name:'Social',icon:'🧑‍🤝‍🧑',data:`
+friend|Made a Friend|🤝|Make a new friend.|C|
+stranger|Hello, Stranger|👋|Start a conversation with someone new.|C|friend
+pen|Pen Pal|💌|Befriend someone from another country.|U|stranger
+party|Host|🎉|Host a get-together at your place.|U|friend
+surprise|Surprise!|🎁|Organise a surprise for someone.|U|party
+game|Game Night|🎲|Run a board or card game night.|C|party
+help|Good Neighbour|🌻|Help someone who didn't ask.|C|friend
+vol|Give Back|❤️|Volunteer for something.|U|help
+blood|Lifesaver|🩸|Donate blood.|R|vol
+mentor|Mentor|🧭|Guide someone through something you know well.|R|vol
+speech|Public Speaker|📣|Speak to a room of people.|R|friend
+toast|Raise a Glass|🥂|Give a toast at an event.|R|speech
+date|First Date|🌹|Go on a date.|U|friend
+love|Fell in Love|💘|Fall in love.|R|date
+wed|Wedding Guest|💒|Attend a wedding.|U|friend
+old|Ten Years Strong|⏳|Stay close to a friend for 10 years.|R|friend
+reunion|Back Together|🥹|Reconnect with someone you lost touch with.|U|old`},
+{id:'learn',name:'Learning',icon:'📚',data:`
+read|Finished a Book|📖|Read a whole book.|C|
+lib|Library Card|🪪|Borrow a book from a library.|C|read
+r12|Bookworm|🐛|Finish 12 books in a year.|R|read
+series|Series Finisher|📚|Finish a long book series.|U|read
+course|Student Again|💻|Complete an online course.|C|read
+code|Hello, World!|⌨️|Write your first program.|U|course
+app|It Runs!|📱|Build a small app or website.|R|code
+lang|Parlez-Vous?|🗣️|Have a short conversation in a new language.|U|course
+fluent|Fluent|🌐|Hold a long conversation comfortably in a second language.|E|lang
+exam|Exam Survivor|📝|Pass an exam you were nervous about.|C|read
+degree|Degree Earned|🎓|Earn a university degree.|R|exam
+paper|Published|📰|Get your writing published.|E|degree
+teach|Teacher Mode|🧑‍🏫|Teach someone a skill.|U|course
+chess|Check and Mate|♟️|Win a game of chess.|C|read
+mind|Plot Twist|🤯|Change your mind about something big.|U|read
+museum|Culture Trip|🏛️|Visit a museum for fun.|C|read`},
+{id:'creative',name:'Creative',icon:'🎨',data:`
+art|Made by Me|🖼️|Create an original piece of art.|C|
+draw|Sketchbook|✏️|Fill a sketchbook page.|C|art
+paint|Finished Canvas|🎨|Finish a painting.|U|draw
+sell|First Sale|💰|Sell something you made.|R|paint
+show|On the Wall|🧑‍🎨|Show your art in public.|E|sell
+photo|Frame It|📷|Take a photo you're proud of.|C|art
+film|Director|🎥|Make a short film.|R|photo
+instr|First Chord|🎸|Learn to play a chord or melody.|C|art
+song|Full Song|🎵|Play a whole song.|U|instr
+band|Jam Session|🥁|Play music with other people.|U|song
+gig|Live on Stage|🎶|Perform in front of an audience.|E|band
+comp|Original|🎼|Write your own song.|R|song
+write|Wordsmith|✍️|Write a story or poem.|C|art
+novel|Last Page|📕|Finish a full manuscript.|E|write
+dance|Moves|💃|Learn and perform a dance routine.|U|art
+craft|Handmade|🧶|Knit, sew, or craft something.|C|art
+sing|Karaoke Courage|🎙️|Sing in front of others.|U|art`},
+{id:'adventure',name:'Adventure',icon:'🧭',data:`
+explore|Somewhere New|🧭|Visit a place you've never been.|C|
+trip|Weekend Away|🧳|Take an overnight trip.|C|explore
+road|Road Trip|🚙|Take a proper road trip.|U|trip
+camp|Under Canvas|⛺|Sleep in a tent.|U|trip
+sunrise|Early Light|🌅|Watch a sunrise on purpose.|U|camp
+stars|Stargazer|🌌|See the Milky Way.|R|camp
+fish|Caught One|🎣|Catch a fish.|C|camp
+night|Night Train|🚆|Travel overnight by train.|U|trip
+plane|First Flight|✈️|Take a flight.|C|trip
+stamp|Passport Stamp|🛂|Visit another country.|U|plane
+three|Three Countries|🌍|Visit 3 different countries.|R|stamp
+seven|Seven Continents|🗺️|Visit every continent.|L|three|s
+solo|Solo Traveller|🚶|Travel alone.|R|stamp
+aurora|Northern Lights|🌠|See the aurora.|E|solo
+volc|Fire Mountain|🌋|See a volcano.|R|plane
+wild|Wild Encounter|🦌|See a wild animal in nature.|C|explore
+lost|Lost & Found|🧐|Get lost somewhere and find your way back.|U|explore`},
+{id:'everyday',name:'Everyday',icon:'🏠',data:`
+adult|Adulting Begins|🧺|Do your own laundry.|C|
+cook|First Meal|🍳|Cook a meal yourself.|C|adult
+bake|Fresh Baked|🍞|Bake something from scratch.|C|cook
+sig|Signature Dish|🥘|Have a dish people ask for again.|U|cook
+host|Dinner Host|🍽️|Cook for a group.|U|sig
+plant|Green Thumb|🪴|Keep a plant alive for a year.|U|adult
+grow|Harvest|🥕|Grow something you can eat.|U|plant
+budget|Tracked Spending|🧾|Track your spending for a month.|U|adult
+tax|Paperwork Boss|📄|File your own taxes.|U|budget
+fix|Fix It|🔧|Repair something instead of replacing it.|C|adult
+paint|Fresh Coat|🖌️|Paint a room.|U|fix
+build|Flat-Pack Victor|🪑|Assemble furniture with zero screws left over.|R|fix
+sew|Button Back On|🧵|Sew a button back on.|C|adult
+early|Early Bird|🐦|Wake before 6 am for a week.|U|adult
+coffee|Dialled In|☕|Make a coffee you'd pay for.|C|adult`},
+{id:'digital',name:'Digital',icon:'📱',data:`
+channel|Start a Channel|🎬|Start a channel or page to share what you make.|C|
+upload|First Upload|📹|Publish your first video or post.|C|channel
+sub1|First Subscriber|🙋|Get your first subscriber.|C|upload
+comment|First Comment|💬|Get your first comment.|C|upload
+sub50|Getting Noticed|👀|Reach 50 subscribers.|U|sub1
+v1k|1,000 Views|📈|Make a video that gets 1,000 views.|R|sub50+comment
+sub1k|Community|👥|Reach 1,000 subscribers.|E|v1k
+viral|Went Viral|🚀|Hit 100,000 views on one post.|L|v1k|s
+live|Going Live|🔴|Stream live.|U|upload
+podcast|On Air|📻|Release a podcast episode.|R|channel
+blog|Blog Post|🖋️|Publish a blog post.|C|channel
+meme|Meme Maker|🐸|Make a meme other people share.|U|channel
+game|Level Cleared|🎮|Finish a game you kept meaning to.|C|channel
+pc|PC Built|🖥️|Build a computer.|U|game
+mod|Modder|🧩|Make a mod or plugin.|R|pc
+zero|Inbox Zero|📭|Empty your inbox.|R|channel`},
+{id:'hobbies',name:'Hobbies',icon:'🧰',data:`
+hobby|New Hobby|🎯|Pick up a new hobby.|C|
+cube|Cube Solved|🧊|Solve a Rubik's cube.|U|hobby
+puzzle|1000 Pieces|🧩|Complete a 1,000-piece puzzle.|U|hobby
+magic|Abracadabra|🎩|Perform a magic trick that works.|C|hobby
+juggle|Three Balls|🤹|Juggle three balls.|U|magic
+solder|Hot Iron|🔌|Solder a circuit.|U|hobby
+robot|It Moves!|🤖|Build a robot.|R|solder
+print|3D Printed|🖨️|Print something in 3D.|U|hobby
+wood|Sawdust|🪵|Build something from wood.|U|hobby
+car|Tyre Change|🛞|Change a tyre.|C|hobby
+oil|Under the Hood|🔩|Change your own oil.|U|car
+collect|Collector|📦|Collect 50 of something.|U|hobby
+aid|First Aid Ready|🩹|Take a first aid course.|R|hobby
+board|Tabletop Hero|🐉|Play a tabletop RPG session.|U|hobby
+astro|Telescope Night|🔭|Look at Saturn or Jupiter.|R|hobby`},
+{id:'oops',name:'Oops!',icon:'🤦',data:`
+oops|Welcome to Being Human|🤦|Something went wrong today. It's fine.|C|
+toe|Toe.exe Stopped Working|🦶|Stub your toe on furniture you've owned for years.|C|oops
+gravity|Gravity Wins|📱|Drop your phone. Screen down, naturally.|C|oops
+crack|Spiderweb Screen|🕸️|Live with a cracked screen for over a month.|U|gravity
+dive|Dive Test Failed|🚽|Phone meets water. Sink, pool or worse.|R|gravity
+kitchen|Kitchen Incident|🔥|Burn a meal until the smoke alarm joins the conversation.|C|oops
+salt|Sugar, Not Salt|🧂|Mix up two white powders in a recipe.|U|kitchen
+micro|Soup Explosion|♨️|Microwave soup and redecorate the inside.|C|kitchen
+rain|Bad Timing|🌧️|Get caught in rain right after saying it wouldn't.|C|oops
+umb|Umbrella Betrayal|☂️|Watch your umbrella flip inside out.|U|rain
+wallet|Wallet Damage|💸|Make a purchase you regret within the hour.|C|oops
+sub|Free Trial, Paid Forever|📆|Pay for a subscription you forgot existed.|U|wallet
+cart|3 AM Checkout|🛒|Order something at 3 AM you can't explain later.|U|wallet
+fall|Unexpected Flight|🚲|Fall off your bike. The ground was welcoming.|C|oops
+sleep|Sleep Deprived|🧟|Stay up far too late for no good reason.|C|oops
+snooze|Snooze Champion|⏰|Hit snooze five times in a row.|C|sleep
+over|Missed It by Minutes|😴|Oversleep something important.|U|snooze
+chat|Wrong Chat|💬|Send a message to the wrong person.|U|oops
+duck|Autocorrect Disaster|🦆|Send a message autocorrect rewrote without mercy.|U|chat
+mute|You're on Mute|🔇|Talk for a full minute on a call while muted.|C|oops
+pull|Push, Not Pull|🚪|Push a door that said pull. Witnesses present.|C|oops
+keys|Keys? Which Keys?|🗝️|Search the house for something you were holding.|C|oops
+lock|Locked Out|🔐|Lock yourself out of your home or car.|U|keys
+name|Name Blank|🫥|Forget someone's name mid-introduction.|C|oops
+wave|Wave Misfire|🙋|Wave back at someone who was waving at someone else.|U|name
+stop|Missed Your Stop|🚌|Ride past your stop.|C|oops
+sock|Wet Sock Tragedy|🧦|Step in a puddle wearing your only dry socks.|C|oops
+gasser|Sneaky Gasser|💨|Let one slip in public, then walk away like a professional.|U|oops|s
+laugh|Wrong Moment Laughter|🤭|Laugh at something that was absolutely not funny.|U|oops`}
+];
+const FR=[
+{n:'Liam',col:'#c58b4a',lv:9,p:2,ach:['oops.gasser','oops.toe','life.job','sports.run','everyday.cook','oops.sock']},
+{n:'Alex',col:'#7fb2d6',lv:12,p:1,ach:['learn.code','digital.channel','sports.gym','adventure.plane','social.friend']},
+{n:'Mihai',col:'#9bc56a',lv:7,p:0,ach:['sports.bike','sports.bsolo','sports.b5','social.friend']},
+{n:'Sofia',col:'#d98fb5',lv:15,p:3,ach:['digital.channel','digital.upload','digital.sub1','digital.sub50','creative.photo','adventure.stamp']},
+{n:'Dan',col:'#e5c46a',lv:6,p:0,ach:['oops.mute','oops.pull','oops.keys','hobbies.cube']},
+{n:'Ana',col:'#b99be0',lv:10,p:1,ach:['creative.instr','creative.song','creative.band','creative.gig','social.speech']}];
+const SE=[
+{id:'s1',w:'Liam',t:'12 min ago',a:'oops.gasser',rx:{'😂':6,'💀':3}},
+{id:'s2',w:'Alex',t:'1 h ago',lv:12,rx:{'🔥':4,'👏':5}},
+{id:'s3',w:'Mihai',t:'3 h ago',a:'sports.bsolo',rx:{'👏':7,'🔥':2}},
+{id:'s4',w:'Sofia',t:'5 h ago',a:'digital.sub50',rx:{'🔥':9,'👏':4}},
+{id:'s5',w:'Dan',t:'yesterday',a:'oops.mute',rx:{'😂':8}},
+{id:'s6',w:'Ana',t:'yesterday',a:'creative.gig',rx:{'🔥':12,'👏':10}},
+{id:'s7',w:'Liam',t:'2 days ago',a:'oops.toe',rx:{'😂':4,'💀':2}}];
+const GOALS=[
+{t:'Toes stubbed, all of us',a:'oops.toe',base:12408,goal:15000},
+{t:'Phones dropped, screen first',a:'oops.gravity',base:48211,goal:50000},
+{t:'First solo bike rides',a:'sports.bsolo',base:9120,goal:10000},
+{t:'Books finished',a:'learn.read',base:30877,goal:35000},
+{t:'Meals cooked from scratch',a:'everyday.cook',base:21540,goal:25000}];
+const EMO=['🔥','👏','😂','💀'];
+const LEVEL_TITLES=[[1,'Newcomer'],[5,'Curious Beginner'],[10,'Explorer'],[20,'Dedicated'],[35,'Specialist'],[50,'Veteran'],[75,'Master'],[100,'Legendary']];
+const CATMETA={daily:{icon:'📅',label:'Daily',c:'#9bc56a'},weekly:{icon:'🗓️',label:'Weekly',c:'#5fa8e8'},discovery:{icon:'🧭',label:'Discovery',c:'#e5c46a'},skill:{icon:'🛠️',label:'Skill',c:'#b57be8'},social:{icon:'🧑‍🤝‍🧑',label:'Social',c:'#f08fb0'},hidden:{icon:'❓',label:'Hidden',c:'#f0b93a'}};
+/* quest line: id|cat|tag|difficulty|name|description|xp|coins|time|relatedAchievement|secretFlag */
+const QUEST_SRC=`
+hello-world|daily|learn|Easy|Hello, World!|Write and run a simple program that prints "Hello, World!".|40|10|15 min|learn.code|
+ten-pushups|daily|sports|Easy|Quick Ten|Do ten push-ups, squats, or another bodyweight exercise, right now.|30|5|5 min||
+water-plant|daily|everyday|Easy|Thirsty Plant|Water a plant, yours or someone else's.|30|5|5 min|everyday.plant|
+new-word|daily|learn|Easy|Word of the Day|Learn a new word and use it in a sentence today.|30|5|10 min||
+declutter|daily|everyday|Easy|One Drawer|Tidy one drawer, shelf or surface.|35|8|15 min||
+photo-ordinary|daily|creative|Easy|Photo Hunter|Take an interesting photograph of something ordinary.|35|8|10 min|creative.photo|
+compliment|daily|social|Easy|Say It|Give someone a genuine compliment.|30|5|2 min||
+no-phone-meal|daily|everyday|Easy|Phone-Free Meal|Eat one meal without looking at a screen.|35|8|20 min||
+five-facts|daily|learn|Easy|Knowledge Collector|Learn five interesting facts about a subject you know little about.|40|10|15 min||
+stretch|daily|sports|Easy|Loosen Up|Stretch for five minutes.|30|5|5 min||
+big-glass|daily|everyday|Easy|Big Glass|Drink a full glass of water first thing.|25|5|2 min||
+doodle|daily|creative|Easy|Two-Minute Doodle|Doodle something, anything, for two minutes.|30|5|2 min|creative.draw|
+thank-you|daily|social|Easy|Thanks|Thank someone who helped you recently.|30|5|2 min||
+walk-block|daily|sports|Easy|Around the Block|Take a short walk outside.|35|8|15 min||
+kitchen-new|daily|everyday|Medium|Kitchen Explorer|Prepare a simple meal you have never made before.|45|12|30 min|everyday.cook|
+read-pages|daily|learn|Easy|A Few Pages|Read at least ten pages of a book.|35|8|15 min|learn.read|
+small-fix|daily|everyday|Medium|Small Fix|Fix or tidy up one small thing that has been bugging you.|45|12|20 min|everyday.fix|
+new-track|daily|digital|Easy|New Track|Listen to a song from a genre you don't usually listen to.|30|6|10 min||
+catch-up|daily|social|Easy|Catch Up|Message a friend you haven't spoken to in a while.|30|6|5 min||
+one-paragraph|daily|creative|Easy|One Paragraph|Write one paragraph about your day.|30|6|10 min||
+paper-architect|weekly|hobbies|Medium|Paper Architect|Build a small paper structure that can stand on its own.|130|30|1-2 h||
+python-project|weekly|learn|Hard|First Python Project|Build a small script or program that does something useful for you.|180|40|2-4 h|learn.app|
+new-territory|weekly|adventure|Medium|New Territory|Visit somewhere nearby you have never been before.|140|32|1-3 h|adventure.explore|
+cook-signature|weekly|everyday|Medium|Signature Attempt|Cook a more ambitious dish than usual.|150|35|1-2 h|everyday.sig|
+skill-week|weekly|hobbies|Medium|New Skill, Week One|Spend time this week learning the basics of a skill you don't have.|160|35|2 h total|hobbies.hobby|
+room-reset|weekly|everyday|Medium|Room Reset|Properly declutter and clean one room.|150|32|1-2 h||
+short-story|weekly|creative|Medium|Short Story|Write a short story or long piece from start to finish.|160|35|2-3 h|creative.write|
+move-four|weekly|sports|Medium|Move Four Days|Exercise on four different days this week.|170|38|varies||
+give-hour|weekly|social|Medium|Give an Hour|Spend an hour volunteering or helping someone with a real task.|180|40|1 h|social.help|
+money-week|weekly|everyday|Medium|Money Check-In|Track every expense for a full week.|140|30|ongoing|everyday.budget|
+sound-explorer|discovery|digital|Easy|Sound Explorer|Discover a new music genre you have never properly listened to.|50|14|20 min||
+new-cuisine|discovery|everyday|Medium|New Cuisine|Try a cuisine you have never eaten before.|60|16|varies||
+culture-trip|discovery|learn|Medium|Culture Trip|Visit a museum, gallery or exhibition for the first time in a while.|70|18|1-2 h|learn.museum|
+tabletop-hero|discovery|hobbies|Medium|Tabletop Hero|Play a tabletop game or RPG session you've never tried.|65|16|1-2 h|hobbies.board|
+new-move|discovery|sports|Medium|New Move|Try a sport or physical activity you've never done.|75|20|30-60 min||
+route-scout|discovery|adventure|Easy|Route Scout|Take a completely different route somewhere you normally go.|50|12|varies|adventure.broute|
+handmade-attempt|discovery|creative|Medium|Handmade Attempt|Try a craft you've never attempted, like knitting or woodworking.|65|16|1 h|creative.craft|
+parlez-vous|discovery|learn|Easy|Parlez-Vous?|Learn ten words of a language you don't speak.|55|14|20 min|learn.lang|
+stargazing|discovery|adventure|Medium|Stargazer|Spend some time outside at night looking at the stars.|60|16|30 min|adventure.stars|
+quiet-hour|discovery|everyday|Easy|Quiet Hour|Spend an hour with no screens or background noise.|50|12|1 h||
+python-loop|skill|learn|Medium|Loop There It Is|Write a program that uses a loop to repeat something.|70|18|30 min||
+first-chord|skill|creative|Easy|First Chord|Learn to play a chord or a simple melody.|60|15|20 min|creative.instr|
+kitchen-skills|skill|everyday|Medium|Kitchen Skills|Practise a specific cooking technique, like chopping or a sauce.|65|16|30 min||
+digital-artist|skill|creative|Medium|Digital Artist|Create a small digital drawing or design.|65|16|30-60 min|creative.art|
+quick-maths|skill|learn|Easy|Quick Maths|Practise mental arithmetic for ten minutes.|55|12|10 min||
+say-it-loud|skill|social|Hard|Say It Loud|Practise speaking in front of a mirror or a small group.|90|22|20 min|social.speech|
+fast-fingers|skill|digital|Easy|Fast Fingers|Take a typing speed test and try to beat your score.|50|12|10 min||
+tie-one-on|skill|hobbies|Easy|Tie One On|Learn to tie a knot you don't already know.|55|12|15 min||
+breathe|skill|sports|Easy|Breathe|Practise a breathing or stretching routine.|50|12|10 min||
+budget-basics|skill|everyday|Medium|Budget Basics|Learn one new personal finance concept and apply it.|70|18|20 min||
+game-night-invite|social|social|Medium|Game Night|Organise a game night with friends or family.|80|20|varies|social.game|
+pass-it-on|social|social|Easy|Pass It On|Start a small compliment chain with a group of friends.|50|12|10 min||
+cook-for-someone|social|social|Medium|Cook for Someone|Cook a meal for someone else.|75|18|1 h|everyday.host|
+back-together|social|social|Medium|Back Together|Reconnect with someone you have lost touch with.|70|16|15 min|social.reunion|
+teach-someone|social|social|Medium|Pass the Knowledge|Teach someone something you know how to do.|80|20|30 min|learn.teach|
+plan-something|social|social|Medium|Plan Something|Plan an activity for a group of friends.|75|18|varies||
+after-midnight|hidden|everyday|Medium|After Midnight|Write down a thought you had after midnight.|90|25|5 min||s
+quiet-kindness|hidden|social|Medium|Quiet Kindness|Do something kind for a stranger, and don't tell anyone.|100|28|varies||s
+mystery-ingredient|hidden|everyday|Hard|Mystery Ingredient|Cook something using an ingredient you have never used before.|110|30|1 h||s
+unplugged|hidden|everyday|Hard|Unplugged|Go a full day without social media.|130|35|1 day||s
+hidden-talent|hidden|creative|Medium|Hidden Talent|Do something you're secretly good at, just for yourself.|95|26|varies||s
+dear-future-you|hidden|creative|Medium|Dear Future You|Write a letter to yourself to read in a year.|100|28|20 min||s`;
+const QUESTS=[],QUESTS_BY={};
+QUEST_SRC.trim().split('\n').forEach(l=>{const f=l.split('|');
+  const q={id:f[0],cat:f[1],tag:f[2],diff:f[3],name:f[4],desc:f[5],xp:+f[6],coins:+f[7],time:f[8],ach:f[9]||'',secret:f[10]==='s'};
+  QUESTS.push(q);QUESTS_BY[q.id]=q});
+const SHOP=[
+{id:'frame-none',cat:'frame',name:'No Frame',desc:'Plain avatar, no frame.',price:0,icon:'⬜'},
+{id:'frame-gold',cat:'frame',name:'Golden Frame',desc:'A warm golden ring around your avatar.',price:60,icon:'🟡'},
+{id:'frame-vine',cat:'frame',name:'Vine Frame',desc:'A leafy green ring around your avatar.',price:50,icon:'🌿'},
+{id:'frame-neon',cat:'frame',name:'Neon Frame',desc:'A glowing cyan ring around your avatar.',price:90,icon:'💠'},
+{id:'bg-none',cat:'bg',name:'Default Backdrop',desc:'The regular map backdrop.',price:0,icon:'⬛'},
+{id:'bg-sunset',cat:'bg',name:'Sunset Backdrop',desc:'A warm dusk gradient behind the achievement map.',price:50,icon:'🌇'},
+{id:'bg-circuit',cat:'bg',name:'Circuit Backdrop',desc:'A faint circuit-board grid behind the map.',price:70,icon:'🔲'},
+{id:'bg-aurora',cat:'bg',name:'Aurora Backdrop',desc:'A soft shifting glow behind the map.',price:90,icon:'🌌'},
+{id:'plate-none',cat:'plate',name:'No Nameplate',desc:'Just your title text.',price:0,icon:'▫️'},
+{id:'plate-wood',cat:'plate',name:'Wooden Nameplate',desc:'A carved wooden plate behind your title.',price:30,icon:'🪵'},
+{id:'plate-chrome',cat:'plate',name:'Chrome Nameplate',desc:'A sleek metallic plate behind your title.',price:45,icon:'⚙️'},
+{id:'theme-default',cat:'theme',name:'Forest (default)',desc:'The original Skillster green.',price:0,icon:'🟢'},
+{id:'theme-ember',cat:'theme',name:'Ember',desc:'A warm orange accent throughout the app.',price:70,icon:'🟠'},
+{id:'theme-glacier',cat:'theme',name:'Glacier',desc:'A cool blue accent throughout the app.',price:70,icon:'🔵'},
+{id:'theme-royal',cat:'theme',name:'Royal',desc:'A rich purple accent throughout the app.',price:90,icon:'🟣'},
+{id:'skin-default',cat:'skin',name:'Classic Nodes',desc:'The original achievement node style.',price:0,icon:'◻️'},
+{id:'skin-neon',cat:'skin',name:'Neon Nodes',desc:'Completed achievements glow cyan on the map.',price:80,icon:'🩵'},
+{id:'skin-royal',cat:'skin',name:'Royal Nodes',desc:'Completed achievements glow purple on the map.',price:100,icon:'💜'},
+{id:'badge-none',cat:'badge',name:'No Badge',desc:'No decoration next to your name.',price:0,icon:'—'},
+{id:'badge-star',cat:'badge',name:'Star Badge',desc:'A small star next to your name.',price:25,icon:'⭐'},
+{id:'badge-fire',cat:'badge',name:'Fire Badge',desc:'A small flame next to your name.',price:25,icon:'🔥'},
+{id:'badge-moon',cat:'badge',name:'Moon Badge',desc:'A small moon next to your name.',price:25,icon:'🌙'},
+{id:'title-none',cat:'title',name:'Use level title',desc:'Show your level title instead of a shop title.',price:0,icon:'🔤'},
+{id:'title-procrastinator',cat:'title',name:'Professional Procrastinator',desc:'A title for a job well, eventually, done.',price:40,icon:'🐌'},
+{id:'title-gremlin',cat:'title',name:'Chaos Gremlin',desc:'For days when nothing goes to plan.',price:40,icon:'😈'},
+{id:'title-snack',cat:'title',name:'Snack Enthusiast',desc:'Self-explanatory.',price:30,icon:'🍪'},
+{id:'title-nightowl',cat:'title',name:'Night Owl',desc:'For the 2am achievement unlockers.',price:35,icon:'🦉'}];
+const SHOP_BY={};SHOP.forEach(i=>SHOP_BY[i.id]=i);
+const CATS_SHOP=[['frame','Frames'],['bg','Backgrounds'],['plate','Nameplates'],['theme','Themes'],['skin','Node Skins'],['badge','Badges'],['title','Titles']];
+const MILESTONES=[
+{id:'m10',label:'First 10 achievements',coins:20,icon:'🥉',test:()=>Object.keys(S.done).length>=10},
+{id:'m50',label:'First 50 achievements',coins:50,icon:'🥈',test:()=>Object.keys(S.done).length>=50},
+{id:'m100',label:'First 100 achievements',coins:100,icon:'🥇',test:()=>Object.keys(S.done).length>=100},
+{id:'mxp1000',label:'First 1,000 XP',coins:40,icon:'✨',test:()=>totalXP()>=1000},
+{id:'mleg',label:'First Legendary achievement',coins:60,icon:'🏆',test:()=>A.some(a=>a.r==='L'&&S.done[a.id])}];
+const FAQ=[
+{q:"What is XP?",a:"XP represents your lifetime progress in Skillster. Earn it through achievements and quests to increase your level."},
+{q:"Can I lose XP?",a:"No. XP is permanent and cannot be deducted or spent."},
+{q:"What are Coins?",a:"Coins are a separate currency earned by completing quests and achievements. You can spend them on cosmetic items in the shop."},
+{q:"Can I buy Coins?",a:"No. Coins are earned through normal Skillster activity."},
+{q:"What happens when a daily quest expires?",a:"It leaves your active quest list. You don't lose any XP or coins."},
+{q:"Can I complete an achievement without doing its related quest?",a:"Yes. Quests are optional suggestions, not mandatory requirements."},
+{q:"Do I need to complete every quest?",a:"No. Choose the activities that interest you."},
+{q:"Do purchased cosmetic items expire?",a:"No. Once purchased, they remain permanently owned."},
+{q:"Can I unlock achievements I've already completed?",a:"Yes. You can unlock achievements retrospectively, even if you haven't completed their prerequisites in the app."}];
+
+/* ---------- SETUP ---------- */
+const COL=170,ROW=120;
+const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const KEY='skillster-v2';
+let S={done:{},priv:{},ny:[],sk:[],feed:[],rx:{},cm:{},share:true,name:'Player One',friends:[],tab:'life',view:'map',qcN:0,qcY:0,coins:0,qxp:0,miles:[],quests:{},shop:{}};
+try{Object.assign(S,JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){}
+S.coins=S.coins||0;S.qxp=S.qxp||0;S.miles=S.miles||[];
+S.quests=S.quests||{};S.quests.dailyIds=S.quests.dailyIds||[];S.quests.weeklyIds=S.quests.weeklyIds||[];
+S.quests.boardIds=S.quests.boardIds||[];S.quests.active=S.quests.active||[];S.quests.log=S.quests.log||[];
+S.quests.dailyDate=S.quests.dailyDate||'';S.quests.weeklyDate=S.quests.weeklyDate||'';
+S.quests.recentDaily=S.quests.recentDaily||[];S.quests.recentWeekly=S.quests.recentWeekly||[];
+S.shop=S.shop||{};S.shop.owned=S.shop.owned||[];S.shop.eq=S.shop.eq||{};
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const A=[],BY={},TB={};
+function layout(t){
+  const kids={};t.nodes.forEach(n=>{const p=n.parents[0];if(p)(kids[p]=kids[p]||[]).push(n)});
+  let row=0;
+  const place=(n,d)=>{n.d=d;const k=kids[n.id]||[];if(!k.length)n.row=row++;else{k.forEach(c=>place(c,d+1));n.row=(k[0].row+k[k.length-1].row)/2}};
+  place(t.nodes[0],0);
+  t.nodes.forEach(n=>{n.x=40+n.d*COL;n.y=40+n.row*ROW});
+}
+TABS.forEach(t=>{TB[t.id]=t;t.nodes=[];
+  t.data.trim().split('\n').forEach(l=>{const f=l.split('|');
+    const n={id:t.id+'.'+f[0],tab:t.id,title:f[1],icon:f[2],desc:f[3],r:f[4],xp:RAR[f[4]].xp,parents:f[5]?f[5].split('+').map(p=>t.id+'.'+p):[],secret:f[6]==='s'};
+    t.nodes.push(n);A.push(n);BY[n.id]=n});
+  layout(t)});
+const FRD={};FR.forEach(f=>FRD[f.n]=f);
+const isDone=a=>!!S.done[a.id],ready=a=>a.parents.every(p=>S.done[p]);
+const st=a=>isDone(a)?'done':ready(a)?'avail':'locked';
+const hidden=a=>a.secret&&!isDone(a);
+const achXP=()=>A.reduce((s,a)=>s+(S.done[a.id]?a.xp:0),0);
+const totalXP=()=>achXP()+S.qxp;
+const lvOf=xp=>Math.floor((1+Math.sqrt(1+xp/6.25))/2),cum=L=>25*(L-1)*L;
+function titleOf(L){let t=LEVEL_TITLES[0][1];for(const[lv,n]of LEVEL_TITLES)if(L>=lv)t=n;return t}
+function levelTitlesUpTo(L){return LEVEL_TITLES.filter(t=>L>=t[0]).map(t=>t[1])}
+const frac=(x,L)=>(x-cum(L))/(cum(L+1)-cum(L))*100;
+const ago=t=>{const m=Math.round((Date.now()-t)/60000);return m<1?'just now':m<60?m+' min ago':m<1440?Math.round(m/60)+' h ago':Math.round(m/1440)+' d ago'};
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove('on'),2200)}
+
+/* ---------- MAP ---------- */
+let V={x:0,y:0,s:1},selId=null;
+const cv=$('#canvas'),world=$('#world');
+const applyV=()=>world.style.transform=`translate(${V.x}px,${V.y}px) scale(${V.s})`;
+function bounds(t){let W=0,H=0;t.nodes.forEach(n=>{W=Math.max(W,n.x+156);H=Math.max(H,n.y+140)});return[W,H]}
+function drawMap(){
+  const t=TB[S.tab],[W,H]=bounds(t);let svg='',h='';
+  t.nodes.forEach(n=>n.parents.forEach((p,i)=>{const P=BY[p],x2=n.x,y2=n.y+38;
+    const cls=(S.done[p]&&S.done[n.id]?'on':S.done[p]?'half':'')+(i?' x':'');
+    svg+=`<path class="${cls}" d="M${P.x+76} ${P.y+38}H${x2-47}V${y2}H${x2}"/>`}));
+  t.nodes.forEach(n=>{const hd=hidden(n);
+    h+=`<button class="node ${st(n)}${n.secret?' secret':''}${n.id===selId?' sel':''}" data-id="${n.id}" style="left:${n.x}px;top:${n.y}px;--rc:${RAR[n.r].c}" aria-label="${esc(hd?'Secret achievement':n.title)}"><span class="box"><i>${hd?'❓':n.icon}</i></span><span class="lbl">${hd?'???':esc(n.title)}</span></button>`});
+  world.style.width=W+'px';world.style.height=H+'px';
+  world.innerHTML=`<svg width="${W}" height="${H}">${svg}</svg>`+h;
+  $('#tabs').innerHTML=TABS.map(x=>{const d=x.nodes.filter(isDone).length;return`<button data-t="${x.id}" class="${x.id===S.tab?'on':''}">${x.icon} ${x.name}<small>${d}/${x.nodes.length}</small></button>`}).join('');
+  applyV();
+}
+function fit(){const [W,H]=bounds(TB[S.tab]),cw=cv.clientWidth,ch=cv.clientHeight;
+  const s=Math.min(1,Math.max(.5,Math.min(cw/W,ch/H)));V.s=s;V.x=Math.max(10,(cw-W*s)/2);V.y=Math.max(10,(ch-H*s)/2);applyV()}
+function centerOn(n){V.x=cv.clientWidth/2-(n.x+38)*V.s;V.y=cv.clientHeight/2-(n.y+38)*V.s;applyV()}
+function zoomAt(f,cx,cy){const ns=Math.min(1.6,Math.max(.3,V.s*f)),k=ns/V.s;V.x=cx-(cx-V.x)*k;V.y=cy-(cy-V.y)*k;V.s=ns;applyV()}
+cv.addEventListener('wheel',e=>{e.preventDefault();const r=cv.getBoundingClientRect();zoomAt(e.deltaY<0?1.1:.9,e.clientX-r.left,e.clientY-r.top)},{passive:false});
+const P=new Map();let moved=0,pd=0;
+const pdist=()=>{const a=[...P.values()];return Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)};
+cv.addEventListener('pointerdown',e=>{if(e.target.closest('.tools,.search'))return;P.set(e.pointerId,{x:e.clientX,y:e.clientY});moved=0;pd=P.size==2?pdist():0});
+addEventListener('pointermove',e=>{const o=P.get(e.pointerId);if(!o)return;const dx=e.clientX-o.x,dy=e.clientY-o.y;P.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(P.size==1){V.x+=dx;V.y+=dy;moved+=Math.abs(dx)+Math.abs(dy);applyV()}
+  else if(P.size==2){const d=pdist(),a=[...P.values()],r=cv.getBoundingClientRect();if(pd)zoomAt(d/pd,(a[0].x+a[1].x)/2-r.left,(a[0].y+a[1].y)/2-r.top);pd=d;moved+=9}});
+const pup=e=>{P.delete(e.pointerId);pd=0};
+addEventListener('pointerup',pup);addEventListener('pointercancel',pup);
+world.addEventListener('click',e=>{const b=e.target.closest('.node');if(b&&moved<7)openDetail(b.dataset.id)});
+$('#tabs').addEventListener('click',e=>{const b=e.target.closest('[data-t]');if(!b)return;S.tab=b.dataset.t;save();closeDetail();drawMap();fit()});
+$('#zi').onclick=()=>zoomAt(1.2,cv.clientWidth/2,cv.clientHeight/2);
+$('#zo').onclick=()=>zoomAt(.83,cv.clientWidth/2,cv.clientHeight/2);
+$('#zf').onclick=fit;
+$('#zn').onclick=()=>{const n=TB[S.tab].nodes.find(x=>!isDone(x)&&!x.secret&&ready(x));if(!n)return toast('Nothing ready here. Try another branch.');centerOn(n);openDetail(n.id)};
+$('#q').addEventListener('keydown',e=>{if(e.key!=='Enter')return;const q=e.target.value.trim().toLowerCase();if(!q)return;
+  const n=A.find(a=>!hidden(a)&&(a.title+' '+a.desc).toLowerCase().includes(q));if(!n)return toast('No match for "'+q+'"');
+  S.tab=n.tab;save();drawMap();if(V.s<.8)V.s=.8;centerOn(n);openDetail(n.id);
+  const el=world.querySelector(`[data-id="${n.id}"]`);el&&el.classList.add('hit')});
+
+/* ---------- DETAIL ---------- */
+function openDetail(id){
+  const a=BY[id];selId=id;const hd=hidden(a),s=st(a),R=RAR[a.r];
+  $('#dcat').textContent=TB[a.tab].icon+' '+TB[a.tab].name;
+  $('#dic').textContent=hd?'❓':a.icon;$('#dt').textContent=hd?'Secret achievement':a.title;
+  $('#dd').textContent=hd?'Hidden until you find it. Quick Check might surface it, or you may already have done it.':a.desc;
+  $('#dtags').innerHTML=`<span class="tag" style="border-color:${R.c};color:${R.c}">${R.n}</span><span class="tag">+${a.xp} XP</span><span class="tag">${s==='done'?'Done':s==='avail'?'Ready':'Locked'}</span>`;
+  const miss=a.parents.filter(p=>!S.done[p]).map(p=>BY[p].title);
+  $('#dpre').textContent=s==='locked'?'Usually comes after: '+miss.join(', ')+'. Already done it? Log it anyway.':'';
+  const b=$('#ddo');b.disabled=s==='done';b.textContent=s==='done'?'Done '+new Date(S.done[id]).toLocaleDateString():'I have done this';
+  $('#dpv').checked=!!S.priv[id];$('#dundo').style.display=s==='done'?'':'none';
+  $('#det').classList.add('on');
+  world.querySelectorAll('.sel').forEach(x=>x.classList.remove('sel'));const el=world.querySelector(`[data-id="${id}"]`);el&&el.classList.add('sel');
+}
+function closeDetail(){$('#det').classList.remove('on');selId=null;world.querySelectorAll('.sel').forEach(x=>x.classList.remove('sel'))}
+$('#dx').onclick=closeDetail;
+$('#ddo').onclick=()=>{if(selId)unlock(selId)};
+$('#dpv').onchange=e=>{if(!selId)return;e.target.checked?S.priv[selId]=1:delete S.priv[selId];save();toast(e.target.checked?'Hidden from your feed':'Visible on your feed')};
+$('#dundo').onclick=()=>{if(!selId)return;delete S.done[selId];S.feed=S.feed.filter(f=>f.a!==selId);save();refresh();toast('Achievement taken back')};
+
+/* ---------- UNLOCK + FX ---------- */
+function unlock(id){
+  const a=BY[id];if(S.done[id])return false;const old=totalXP();
+  S.done[id]=Date.now();S.ny=S.ny.filter(x=>x!==id);S.sk=S.sk.filter(x=>x!==id);
+  const R=RAR[a.r];S.coins+=R.coins;
+  const nw=totalXP();S.feed.unshift({a:id,t:Date.now()});
+  if(lvOf(nw)>lvOf(old))S.feed.unshift({lv:lvOf(nw),t:Date.now()});
+  save();queuePop({icon:a.icon,title:a.title,desc:a.desc,xp:a.xp,coins:R.coins,rc:R.c,rn:R.n},old,nw);checkMilestones();refresh();return true;
+}
+const PQ=[];let popOpen=false,popTimer;
+function queuePop(a,old,nw){PQ.push({a,old,nw});if(!popOpen)nextPop()}
+function nextPop(){
+  const q=PQ.shift();if(!q){popOpen=false;$('#pop').classList.remove('on');return}
+  popOpen=true;const a=q.a,col=a.rc||'#9bc56a',L0=lvOf(q.old),L1=lvOf(q.nw),f=$('#pf');
+  $('#pi').textContent=a.icon;$('#pt').textContent=a.title;$('#pd').textContent=a.desc;
+  $('#pr').textContent=a.rn||'Quest';$('#pr').style.color=col;$('#px').textContent='+'+a.xp+' XP'+(a.coins?' · +'+a.coins+' 🪙':'');
+  f.style.transition='none';f.style.width=frac(q.old,L0)+'%';$('#pl').textContent='Level '+L0;
+  $('#pop').classList.add('on');
+  const go=()=>{f.style.transition='width .9s steps(18)';
+    if(L1>L0){f.style.width='100%';setTimeout(()=>{f.style.transition='none';f.style.width='0%';$('#pl').innerHTML='<span class="hl">Level up! Level '+L1+', '+titleOf(L1)+'</span>';
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{f.style.transition='width .9s steps(18)';f.style.width=frac(q.nw,L1)+'%'}))},1000)}
+    else{f.style.width=frac(q.nw,L1)+'%';$('#pl').textContent='Level '+L1+', '+(cum(L1+1)-q.nw)+' XP to next'}
+    const r=$('#pi').getBoundingClientRect();burst(r.left+r.width/2,r.top+r.height/2,col)};
+  requestAnimationFrame(()=>requestAnimationFrame(go));
+  clearTimeout(popTimer);popTimer=setTimeout(()=>$('#pok').click(),6500);
+}
+$('#pok').onclick=()=>{clearTimeout(popTimer);nextPop()};
+const fx=$('#fx'),cx=fx.getContext('2d');let ps=[],raf=0;
+const sizeFx=()=>{fx.width=innerWidth;fx.height=innerHeight};addEventListener('resize',sizeFx);sizeFx();
+function burst(x,y,col){
+  if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+  for(let i=0;i<40;i++){const an=Math.random()*6.283,sp=2+Math.random()*5;ps.push({x,y,vx:Math.cos(an)*sp,vy:Math.sin(an)*sp-2,s:4+Math.floor(Math.random()*3)*3,l:1,c:Math.random()<.3?'#f0f0d8':col})}
+  if(!raf)raf=requestAnimationFrame(tick)}
+function tick(){cx.clearRect(0,0,fx.width,fx.height);ps=ps.filter(p=>p.l>0);
+  ps.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.22;p.vx*=.98;p.l-=.018;cx.globalAlpha=Math.max(p.l,0);cx.fillStyle=p.c;cx.fillRect(Math.round(p.x),Math.round(p.y),p.s,p.s)});
+  cx.globalAlpha=1;raf=ps.length?requestAnimationFrame(tick):0;if(!raf)cx.clearRect(0,0,fx.width,fx.height)}
+
+/* ---------- QUICK CHECK ---------- */
+let qcCur=null;
+function qcPick(){
+  let pool=A.filter(a=>!S.done[a.id]&&!S.ny.includes(a.id)&&!S.sk.includes(a.id));
+  if(!pool.length){S.sk=[];pool=A.filter(a=>!S.done[a.id]&&!S.ny.includes(a.id))}
+  if(!pool.length){S.ny=[];pool=A.filter(a=>!S.done[a.id])}
+  if(pool.length>1&&qcCur)pool=pool.filter(a=>a.id!==qcCur.id);
+  return pool.length?pool[Math.floor(Math.random()*pool.length)]:null}
+function renderQC(newCard){
+  if(newCard||!qcCur||S.done[qcCur.id])qcCur=qcPick();
+  const a=qcCur,el=$('#qcp');
+  const head=`<h1>Quick Check</h1><p class="muted">Cards come up in random order, prerequisites or not. You may have done things you never thought to log.</p>`;
+  if(!a){el.innerHTML=head+'<div class="panel">You have unlocked every achievement. Add more to the list and come back.</div>';return}
+  const R=RAR[a.r],locked=st(a)==='locked';
+  el.innerHTML=head+`<div class="panel qc"><div class="small">${TB[a.tab].icon} ${TB[a.tab].name}${a.secret?' · Secret found':''}</div>
+  <div class="qcbox">${a.icon}</div><h2>${esc(a.title)}</h2><p class="d">${esc(a.desc)}</p>
+  <span class="tag" style="border-color:${R.c};color:${R.c}">${R.n}</span><span class="tag">+${a.xp} XP</span>${locked?'<span class="tag">Skips ahead of its prerequisites</span>':''}
+  <div class="qcq">Have you done this?</div>
+  <div class="qcb"><button class="btn" id="qy">Yes</button><button class="btn gray" id="qn">Not yet</button><button class="btn dark" id="qs">Skip</button></div>
+  <p class="small" style="margin-top:16px">Not yet: shows up again last. Skip: comes back later. Keys: Y, N, S.<br>This session: ${S.qcY} unlocked from ${S.qcN} answered · ${A.filter(x=>!S.done[x.id]).length} left to discover</p></div>`;
+  $('#qy').onclick=()=>qcAns('y');$('#qn').onclick=()=>qcAns('n');$('#qs').onclick=()=>qcAns('s');
+}
+function qcAns(k){
+  const a=qcCur;if(!a)return;
+  if(k==='y'){S.qcN++;S.qcY++;unlock(a.id)}
+  else if(k==='n'){S.qcN++;if(!S.ny.includes(a.id))S.ny.push(a.id)}
+  else if(!S.sk.includes(a.id))S.sk.push(a.id);
+  save();renderQC(true);
+}
+addEventListener('keydown',e=>{if(S.view!=='qc'||e.target.tagName==='INPUT'||e.ctrlKey||e.metaKey||$('#pop').classList.contains('on'))return;
+  const k={y:'y',n:'n',s:'s'}[e.key.toLowerCase()];if(k)qcAns(k)});
+
+/* ---------- FEED ---------- */
+const allFriends=()=>FR.concat(S.friends);
+function evHTML(e,own){
+  const a=e.a?BY[e.a]:null,q=e.q?QUESTS_BY[e.q]:null,who=own?esc(S.name)+' (you)':esc(e.w),col=own?'#9bc56a':(allFriends().find(f=>f.n===e.w)||{}).col||'#8aa';
+  const txt=e.join?'joined Skillster':a?`unlocked <b>${esc(a.title)}</b>`:q?`completed the quest <b>${esc(q.name)}</b>`:`reached <b>Level ${e.lv}</b>`;
+  const id=e.id||('m'+e.t),R=a?RAR[a.r]:null,mine=S.rx[id]||{};
+  const rx=EMO.map(m=>{const c=((e.rx||{})[m]||0)+(mine[m]?1:0);return`<button class="${mine[m]?'me':''}" data-rx="${id}|${m}">${m} ${c||''}</button>`}).join('');
+  const cm=(S.cm[id]||[]).map(c=>`<div class="cm"><b>${esc(c.n)}</b> ${esc(c.x)}</div>`).join('');
+  const frameCls=own?(S.shop.eq.frame||'').replace('frame-none',''):'';
+  const badge=own&&S.shop.eq.badge&&S.shop.eq.badge!=='badge-none'?' '+SHOP_BY[S.shop.eq.badge].icon:'';
+  return`<div class="panel ev"><div class="av ${frameCls}" style="background:${col}">${esc((own?S.name:e.w)[0]||'?').toUpperCase()}</div><div class="b">
+  <div><b>${who}</b>${badge} ${txt}</div>
+  ${a?`<div style="margin-top:6px"><span class="tag">${a.icon} ${TB[a.tab].name}</span><span class="tag" style="color:${R.c};border-color:${R.c}">${R.n}</span><span class="tag">+${a.xp} XP</span></div>`:''}
+  ${q?`<div style="margin-top:6px"><span class="tag">${CATMETA[q.cat].icon} ${CATMETA[q.cat].label}</span><span class="tag">+${q.xp} XP</span><span class="tag">+${q.coins} 🪙</span></div>`:''}
+  <div class="small">${own?ago(e.t):e.t}</div><div class="rx">${rx}</div>${cm}
+  <div class="cmrow"><input placeholder="Say something nice" data-ci="${id}" aria-label="Comment"><button class="btn dark" data-post="${id}">Post</button></div></div></div>`;
+}
+function renderFeed(){
+  const own=S.share?S.feed.filter(f=>!f.a||!S.priv[f.a]):[];
+  const joins=S.friends.map(f=>({id:'j'+f.n,w:f.n,t:'just now',join:1}));
+  const goals=GOALS.map(g=>{const c=g.base+(S.done[g.a]?1:0),p=Math.min(100,c/g.goal*100);
+    return`<div class="goal"><div>${esc(g.t)}</div><div class="pbar"><i style="width:${p}%"></i></div><div class="small">${c.toLocaleString()} / ${g.goal.toLocaleString()}${S.done[g.a]?' · you are in this one':''}</div></div>`}).join('');
+  $('#fp').innerHTML=`<h1>Feed</h1><p class="muted">What your friends are unlocking. No rankings, just moments. Friends and counts here are sample data for the prototype.</p>
+  <div class="cols"><div>${own.map(e=>evHTML(e,1)).join('')}${joins.concat(SE).map(e=>evHTML(e)).join('')||'<div class="panel">Nothing yet.</div>'}</div>
+  <div><div class="panel"><b>Friends</b><div style="margin-top:8px">${allFriends().map(f=>`<button class="fr" data-fr="${esc(f.n)}"><span class="av" style="background:${f.col};width:34px;height:34px;font-size:16px">${esc(f.n[0]).toUpperCase()}</span><span>${esc(f.n)}<br><span class="small">Level ${f.lv}</span></span></button>`).join('')}</div>
+  <div class="cmrow"><input id="afn" placeholder="Add a friend by name" maxlength="20"><button class="btn dark" id="afb">Add</button></div></div>
+  <div class="panel"><b>Community achievements</b><p class="small">Sample totals. Unlocking the matching achievement adds you to the count.</p>${goals}</div></div></div>`;
+}
+$('#fp').addEventListener('click',e=>{
+  const r=e.target.closest('[data-rx]');
+  if(r){const[id,m]=r.dataset.rx.split('|');S.rx[id]=S.rx[id]||{};S.rx[id][m]=!S.rx[id][m];save();const y=$('#v-feed').scrollTop;renderFeed();$('#v-feed').scrollTop=y;return}
+  const p=e.target.closest('[data-post]');
+  if(p){const id=p.dataset.post,i=$(`[data-ci="${id}"]`),x=i.value.trim();if(!x)return;(S.cm[id]=S.cm[id]||[]).push({n:S.name,x});save();const y=$('#v-feed').scrollTop;renderFeed();$('#v-feed').scrollTop=y;return}
+  const f=e.target.closest('[data-fr]');if(f)return friendModal(f.dataset.fr);
+  if(e.target.id==='afb'){const n=$('#afn').value.trim();if(!n)return;if(allFriends().some(x=>x.n.toLowerCase()===n.toLowerCase()))return toast('Already friends with '+n);
+    S.friends.push({n,col:'#8fb0a0',lv:1,p:0,ach:[]});save();renderFeed();toast(n+' added')}
+});
+function friendModal(n){
+  const f=allFriends().find(x=>x.n===n);if(!f)return;
+  $('#mbox').innerHTML=`<div class="ev"><div class="av" style="background:${f.col}">${esc(f.n[0]).toUpperCase()}</div><div class="b"><b style="font-size:20px">${esc(f.n)}</b><div class="small">Level ${f.lv}, ${titleOf(f.lv)}</div></div></div>
+  <p style="margin-top:14px"><b>Public achievements</b></p>${f.ach.length?f.ach.map(id=>{const a=BY[id];return`<span class="tag">${a.icon} ${esc(a.title)}</span>`}).join(''):'<p class="small">Just joined. Nothing shared yet.</p>'}
+  ${f.p?`<p class="small">+${f.p} kept private</p>`:''}<button class="btn" style="margin-top:10px" id="mc">Close</button>`;
+  $('#modal').classList.add('on');$('#mc').onclick=()=>$('#modal').classList.remove('on');
+}
+$('#modal').addEventListener('click',e=>{if(e.target.id==='modal')$('#modal').classList.remove('on')});
+
+/* ---------- MILESTONES ---------- */
+function checkMilestones(){
+  MILESTONES.forEach(m=>{if(!S.miles.includes(m.id)&&m.test()){S.miles.push(m.id);S.coins+=m.coins;save();toast(m.icon+' Milestone: '+m.label+' · +'+m.coins+' 🪙')}});
+}
+
+/* ---------- SHOP ---------- */
+function defaultIdFor(cat){return cat==='theme'?'theme-default':cat==='skin'?'skin-default':cat+'-none'}
+function initShop(){CATS_SHOP.forEach(([c])=>{const d=defaultIdFor(c);if(!S.shop.owned.includes(d))S.shop.owned.push(d);if(!S.shop.eq[c])S.shop.eq[c]=d});save()}
+function applyCosmetics(){
+  const eq=S.shop.eq;
+  document.body.dataset.theme=(eq.theme||'theme-default').replace('theme-','');
+  document.body.dataset.skin=(eq.skin||'skin-default').replace('skin-','');
+  document.body.className=document.body.className.split(' ').filter(c=>!c.startsWith('bg-')).join(' ');
+  if(eq.bg&&eq.bg!=='bg-none')document.body.classList.add(eq.bg);
+}
+function buyItem(id){const it=SHOP_BY[id];if(!it||S.shop.owned.includes(id))return;if(S.coins<it.price)return toast('Not enough coins');S.coins-=it.price;S.shop.owned.push(id);save();header();toast('Purchased '+it.name)}
+function equipItem(id){const it=SHOP_BY[id];if(!it||!S.shop.owned.includes(id))return;S.shop.eq[it.cat]=id;save();applyCosmetics()}
+function renderShop(){
+  const el=$('#sp');
+  el.innerHTML=`<h1>Shop</h1><p class="muted">Spend coins on cosmetics. Nothing here changes how the game plays, and nothing expires once bought.</p>
+  <div class="panel" style="text-align:center"><b style="font-size:20px">🪙 ${S.coins}</b><div class="small">coins available</div></div>
+  ${CATS_SHOP.map(([c,label])=>`<div class="panel"><b>${label}</b><div class="shopgrid">${SHOP.filter(i=>i.cat===c).map(i=>{
+    const owned=S.shop.owned.includes(i.id),eq=S.shop.eq[c]===i.id;
+    return`<div class="sitem ${owned?'owned':''} ${eq?'eq':''}" data-item="${i.id}"><div class="ic">${i.icon}</div><div class="nm">${esc(i.name)}</div><div class="pr">${eq?'Equipped':owned?'Owned':'🪙 '+i.price}</div></div>`}).join('')}</div></div>`).join('')}`;
+}
+function shopModal(id){
+  const it=SHOP_BY[id],owned=S.shop.owned.includes(id),eq=S.shop.eq[it.cat]===id;
+  $('#mbox').innerHTML=`<div style="text-align:center"><div style="font-size:54px">${it.icon}</div><h2 style="margin:10px 0 4px">${esc(it.name)}</h2><p class="small">${esc(it.desc)}</p>
+  <p>${owned?'':'<span class="tag">🪙 '+it.price+'</span>'}</p>
+  ${eq?'<button class="btn gray" disabled>Equipped</button>':owned?'<button class="btn" id="mbuy">Equip</button>':`<button class="btn" id="mbuy" ${S.coins<it.price?'disabled':''}>Buy for ${it.price} 🪙</button>`}
+  <button class="btn dark" id="mc" style="margin-top:8px">Close</button></div>`;
+  $('#modal').classList.add('on');$('#mc').onclick=()=>$('#modal').classList.remove('on');
+  const b=$('#mbuy');if(b)b.onclick=()=>{owned?equipItem(id):buyItem(id);$('#modal').classList.remove('on');renderShop();if(S.view==='me')renderMe()};
+}
+$('#sp').addEventListener('click',e=>{const c=e.target.closest('[data-item]');if(c)shopModal(c.dataset.item)});
+
+/* ---------- QUESTS ---------- */
+function topTag(){const c={};A.filter(isDone).forEach(a=>c[a.tab]=(c[a.tab]||0)+1);const ks=Object.keys(c);if(!ks.length)return null;return ks.sort((a,b)=>c[b]-c[a])[0]}
+function pickQuest(pool,avoid){
+  let cand=pool.filter(q=>!avoid.includes(q.id));if(!cand.length)cand=pool;if(!cand.length)return null;
+  if(Math.random()<.7){const ft=topTag();if(ft){const fp=cand.filter(q=>q.tag===ft);if(fp.length)cand=fp}}
+  return cand[Math.floor(Math.random()*cand.length)];
+}
+function ensureQuestBoards(){
+  const Q=S.quests,td=new Date().toDateString();
+  if(Q.dailyDate!==td){Q.dailyDate=td;const pool=QUESTS.filter(q=>q.cat==='daily');Q.dailyIds=[];
+    for(let i=0;i<3;i++){const p=pickQuest(pool,Q.dailyIds.concat(Q.recentDaily));if(p)Q.dailyIds.push(p.id)}
+    Q.recentDaily=Q.dailyIds.slice();}
+  const d=new Date(),day=(d.getDay()+6)%7,mon=new Date(d);mon.setHours(0,0,0,0);mon.setDate(d.getDate()-day);const wk=mon.toDateString();
+  if(Q.weeklyDate!==wk){Q.weeklyDate=wk;const pool=QUESTS.filter(q=>q.cat==='weekly');Q.weeklyIds=[];
+    for(let i=0;i<2;i++){const p=pickQuest(pool,Q.weeklyIds.concat(Q.recentWeekly));if(p)Q.weeklyIds.push(p.id)}
+    Q.recentWeekly=Q.weeklyIds.slice();}
+  Q.boardIds=Q.boardIds||[];
+  const pool=QUESTS.filter(q=>['discovery','skill','social','hidden'].includes(q.cat));
+  let guard=0;
+  while(Q.boardIds.length<6&&guard++<20){const avoid=Q.boardIds.concat(Q.active.map(a=>a.qid)).concat(Q.log.slice(0,10).map(l=>l.qid));
+    const p=pickQuest(pool,avoid);if(!p)break;Q.boardIds.push(p.id)}
+  save();
+}
+function nextMidnight(){const d=new Date();d.setHours(24,0,0,0);return d.getTime()-Date.now()}
+function nextWeekReset(){const d=new Date(),day=(d.getDay()+6)%7,r=new Date(d);r.setHours(24,0,0,0);r.setDate(d.getDate()+(7-day));return r.getTime()-Date.now()}
+function fmtCountdown(ms){if(ms<0)ms=0;return Math.floor(ms/3600000)+'h '+Math.floor(ms%3600000/60000)+'m'}
+function acceptQuest(qid){
+  if(S.quests.active.find(a=>a.qid===qid))return;
+  S.quests.active.push({qid,ts:Date.now()});
+  if(S.quests.boardIds.includes(qid)){S.quests.boardIds=S.quests.boardIds.filter(x=>x!==qid);ensureQuestBoards()}
+  save();toast('Quest accepted: '+QUESTS_BY[qid].name);renderQuests();
+}
+function skipOffer(qid){
+  const Q=S.quests;
+  if(Q.dailyIds.includes(qid)){const pool=QUESTS.filter(q=>q.cat==='daily');const p=pickQuest(pool,Q.dailyIds.concat(Q.recentDaily))||pickQuest(pool,[]);
+    Q.dailyIds=Q.dailyIds.map(id=>id===qid?p.id:id);Q.recentDaily=Q.recentDaily.concat(p.id).slice(-8);}
+  else if(Q.weeklyIds.includes(qid)){const pool=QUESTS.filter(q=>q.cat==='weekly');const p=pickQuest(pool,Q.weeklyIds.concat(Q.recentWeekly))||pickQuest(pool,[]);
+    Q.weeklyIds=Q.weeklyIds.map(id=>id===qid?p.id:id);Q.recentWeekly=Q.recentWeekly.concat(p.id).slice(-6);}
+  else{Q.boardIds=Q.boardIds.filter(x=>x!==qid);ensureQuestBoards();}
+  save();renderQuests();
+}
+function dropQuest(qid){S.quests.active=S.quests.active.filter(a=>a.qid!==qid);save();renderQuests()}
+function completeQuest(qid){
+  const idx=S.quests.active.findIndex(a=>a.qid===qid);if(idx<0)return;
+  const q=QUESTS_BY[qid],old=totalXP();
+  S.quests.active.splice(idx,1);S.qxp+=q.xp;S.coins+=q.coins;
+  S.quests.log.unshift({qid,t:Date.now(),xp:q.xp,coins:q.coins,cat:q.cat});if(S.quests.log.length>300)S.quests.log.length=300;
+  const nw=totalXP();S.feed.unshift({q:qid,t:Date.now()});
+  if(lvOf(nw)>lvOf(old))S.feed.unshift({lv:lvOf(nw),t:Date.now()});
+  save();
+  const cm=CATMETA[q.cat];
+  queuePop({icon:q.secret?'❓':cm.icon,title:q.name,desc:q.desc,xp:q.xp,coins:q.coins,rc:cm.c,rn:cm.label},old,nw);
+  if(q.ach&&!S.done[q.ach])unlock(q.ach);
+  checkMilestones();ensureQuestBoards();refresh();
+}
+function qCard(q,state){
+  const meta=CATMETA[q.cat],hd=q.secret&&state==='offer';
+  return`<div class="qcard"><div class="meta"><span class="tag">${meta.icon} ${meta.label}</span><span class="tag">${q.diff}</span></div>
+  <h3>${hd?'Hidden Quest':esc(q.name)}</h3><div class="d">${hd?'Accept to reveal what this one is.':esc(q.desc)}</div>
+  <div class="meta"><span class="tag">+${q.xp} XP</span><span class="tag">+${q.coins} 🪙</span><span class="tag">${q.time}</span></div>
+  <div class="act">${state==='offer'?`<button class="btn" data-acc="${q.id}">Accept</button><button class="btn dark" data-skip="${q.id}">Skip</button>`:`<button class="btn" data-comp="${q.id}">Complete</button><button class="link" data-drop="${q.id}">Drop</button>`}</div></div>`;
+}
+function renderQuests(){
+  ensureQuestBoards();
+  const Q=S.quests,el=$('#qp');
+  const dailyOffers=Q.dailyIds.filter(id=>!Q.active.find(a=>a.qid===id)).map(id=>QUESTS_BY[id]);
+  const weeklyOffers=Q.weeklyIds.filter(id=>!Q.active.find(a=>a.qid===id)).map(id=>QUESTS_BY[id]);
+  const boardOffers=Q.boardIds.map(id=>QUESTS_BY[id]);
+  const active=Q.active.map(a=>QUESTS_BY[a.qid]).filter(Boolean);
+  const log=Q.log,byCat={};log.forEach(l=>byCat[l.cat]=(byCat[l.cat]||0)+1);
+  const favCat=Object.keys(byCat).sort((a,b)=>byCat[b]-byCat[a])[0];
+  const totXP=log.reduce((s,l)=>s+l.xp,0),totCoin=log.reduce((s,l)=>s+l.coins,0);
+  el.innerHTML=`<h1>Quests</h1><p class="muted">Suggested things to actually go and do. Accept what sounds fun, skip what doesn't — nothing here costs you XP or coins.</p>
+  <div class="panel"><b>Active quests</b>${active.length?active.map(q=>qCard(q,'active')).join(''):'<p class="small">Nothing active yet. Accept a quest below.</p>'}</div>
+  <div class="panel"><b>Daily Quests</b><span class="qtimer"> · resets in ${fmtCountdown(nextMidnight())}</span><div class="qgrid">${dailyOffers.map(q=>qCard(q,'offer')).join('')||'<p class="small">All accepted. Check back tomorrow for more.</p>'}</div></div>
+  <div class="panel"><b>Weekly Quest</b><span class="qtimer"> · resets in ${Math.max(1,Math.ceil(nextWeekReset()/86400000))} day(s)</span><div class="qgrid">${weeklyOffers.map(q=>qCard(q,'offer')).join('')||'<p class="small">All accepted for this week.</p>'}</div></div>
+  <div class="panel"><b>Explore</b><p class="small">Discovery, Skill and Social quests, with the occasional Hidden one. Skip a card and a new one takes its place.</p><div class="qgrid">${boardOffers.map(q=>qCard(q,'offer')).join('')}</div></div>
+  <div class="panel"><b>Quest history</b><p class="small">${log.length} completed · ${totXP} XP earned · ${totCoin} 🪙 earned${favCat?' · favourite type: '+CATMETA[favCat].label:''}</p>
+  ${log.slice(0,10).map(l=>{const q=QUESTS_BY[l.qid];return q?`<div class="small">${CATMETA[l.cat].icon} ${esc(q.name)} — +${l.xp} XP, +${l.coins} 🪙 — ${ago(l.t)}</div>`:''}).join('')||'<p class="small">No quests completed yet.</p>'}</div>`;
+}
+$('#qp').addEventListener('click',e=>{
+  const a=e.target.closest('[data-acc]');if(a)return acceptQuest(a.dataset.acc);
+  const s=e.target.closest('[data-skip]');if(s)return skipOffer(s.dataset.skip);
+  const c=e.target.closest('[data-comp]');if(c)return completeQuest(c.dataset.comp);
+  const d=e.target.closest('[data-drop]');if(d)return dropQuest(d.dataset.drop);
+});
+
+/* ---------- PROFILE ---------- */
+function renderMe(){
+  const xp=totalXP(),L=lvOf(xp),done=A.filter(isDone),privs=done.filter(a=>S.priv[a.id]);
+  const skills=TABS.map(t=>{const x=t.nodes.filter(isDone).reduce((s,a)=>s+a.xp,0),l=Math.floor(Math.sqrt(x/10)),nx=10*(l+1)**2,pv=10*l*l;
+    return`<div class="skill"><span>${t.icon} ${t.name}</span><div class="pbar"><i style="width:${(x-pv)/(nx-pv)*100}%"></i></div><span>Lv ${l}</span></div>`}).join('');
+  const tally=Object.keys(RAR).map(k=>`<span class="tag" style="color:${RAR[k].c};border-color:${RAR[k].c}">${RAR[k].n}: ${done.filter(a=>a.r===k).length}</span>`).join('');
+  $('#mp').innerHTML=`<h1>Profile</h1>
+  <div class="panel ev"><div class="av" style="background:#9bc56a;width:64px;height:64px;font-size:28px">${esc(S.name[0]||'?').toUpperCase()}</div><div class="b">
+  <input class="in" id="nm" value="${esc(S.name)}" maxlength="20" aria-label="Display name" style="width:100%;max-width:240px"><div style="margin:8px 0 4px">Level ${L}, ${titleOf(L)}</div>
+  <div class="pbar"><i style="width:${frac(xp,L)}%"></i></div><div class="small">${xp} XP · ${cum(L+1)-xp} to Level ${L+1} · ${done.length} of ${A.length} unlocked</div></div></div>
+  <div class="panel"><b>Skills</b><p class="small">Each skill levels up from the achievements in its branch.</p>${skills}<div style="margin-top:12px">${tally}</div></div>
+  <div class="panel"><b>Privacy</b><label class="chk"><input type="checkbox" id="shr" ${S.share?'checked':''}> Show my unlocks and level-ups to friends</label>
+  <p class="small">You can also keep any single achievement private from its detail panel on the map.</p>
+  ${privs.length?privs.map(a=>`<span class="tag">${a.icon} ${esc(a.title)} <button class="link" data-pub="${a.id}">make public</button></span>`).join(''):'<p class="small">No private achievements.</p>'}</div>
+  <div class="panel"><b>Your data</b><p class="small">Progress is saved in this browser only.</p><button class="btn gray" id="rst">Reset all progress</button></div>`;
+}
+$('#mp').addEventListener('input',e=>{if(e.target.id==='nm'){S.name=e.target.value.trim()||'Player One';save()}});
+$('#mp').addEventListener('change',e=>{if(e.target.id==='shr'){S.share=e.target.checked;save()}});
+$('#mp').addEventListener('click',e=>{
+  const p=e.target.closest('[data-pub]');if(p){delete S.priv[p.dataset.pub];save();renderMe();return}
+  if(e.target.id==='rst'&&confirm('Reset all progress? This cannot be undone.')){S.done={};S.priv={};S.ny=[];S.sk=[];S.feed=[];S.rx={};S.cm={};S.qcN=0;S.qcY=0;save();closeDetail();refresh()}
+});
+
+/* ---------- NAV ---------- */
+function header(){const xp=totalXP(),L=lvOf(xp);$('#lv').textContent='Lv '+L;$('#hb').style.width=frac(xp,L)+'%';$('#hx').textContent=xp+' XP'}
+function go(v){S.view=v;save();document.querySelectorAll('.view').forEach(x=>x.classList.toggle('on',x.id==='v-'+v));
+  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+  if(v==='map'){drawMap();if(!go.fitted){fit();go.fitted=1}}
+  if(v==='qc')renderQC(!qcCur);if(v==='feed')renderFeed();if(v==='me')renderMe()}
+function refresh(){header();if(S.view==='map')drawMap();else if(S.view==='qc')renderQC(false);else if(S.view==='feed')renderFeed();else renderMe();
+  if(selId&&$('#det').classList.contains('on'))openDetail(selId)}
+$('#nav').addEventListener('click',e=>{const b=e.target.closest('[data-v]');if(b){closeDetail();go(b.dataset.v)}});
+addEventListener('resize',()=>{if(S.view==='map')applyV()});
+header();go(S.view);
+</script>
+</body>
+</html>
